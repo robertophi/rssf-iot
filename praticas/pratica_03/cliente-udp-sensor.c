@@ -1,27 +1,24 @@
-#include "contiki.h"
-#include "contiki-net.h"
-#include "net/ip/resolv.h"
-
+#include <contiki.h>
+#include <contiki-net.h>
+#include <net/ip/resolv.h>
 #include <stdio.h>
-
 #include "utils.h"
+#include "sensor-timer.h"
 
-
-
-
+#define SEND_INTERVAL		(5 * CLOCK_SECOND)
 
 static struct etimer et;
 static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t ipaddr;
 
-
-
+static void udp_handler(void);
+static void send_packet(void);
 
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "Processo UDP cliente");
 
 /*---------------------------------------------------------------------------*/
-AUTOSTART_PROCESSES(&resolv_process, &udp_client_process);
+AUTOSTART_PROCESSES(&resolv_process, &udp_client_process, &sensor_process);
 
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(udp_client_process, ev, data)
@@ -65,7 +62,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
       }
       else if(status != RESOLV_STATUS_CACHED)
       {
-          printf("Nao foi possivel obter IPv6 do servidor.\r\n");
+          printf("Nao foi possivel obter um IPv6 do servidor.\r\n");
           PROCESS_WAIT_EVENT();
       }
   }
@@ -82,7 +79,52 @@ PROCESS_THREAD(udp_client_process, ev, data)
                                                           UIP_HTONS(client_conn->rport));
 
   // Se chegou até aqui, então a conexão foi bem sucedida!
-  // Toca para o próximo experimento! =)
+  // Agora vamos enviar e receber dados!
+
+  etimer_set(&et, SEND_INTERVAL);
+
+  while(1)
+  {
+    PROCESS_YIELD();
+    // PROCESS_WAIT_EVENT();
+    if(etimer_expired(&et))
+    {
+      send_packet();
+      etimer_restart(&et);
+    }
+    else if(ev == tcpip_event)
+    {
+      udp_handler();
+    }
+  }
 
   PROCESS_END();
 }
+
+
+/*------------------FUNÇÕES AUXILIARES---------------------------------------*/
+static void send_packet(void)
+{
+    int_payload_t payload;
+
+    payload.i32 = get_temp_average();
+    printf("Vai enviar: %ld\n", payload.i32);
+
+    if(uip_ds6_get_global(ADDR_PREFERRED) == NULL) {
+      printf("Aguardando auto-configuracao de IP\n");
+      return;
+    }
+
+    uip_udp_packet_send(client_conn, payload.i8, sizeof(payload));
+}
+/*---------------------------------------------------------------------------*/
+static void udp_handler(void)
+{
+    int_payload_t payload;
+
+    if(uip_newdata()) {
+      memcpy(payload.i8, uip_appdata, sizeof(payload));
+      printf("Resposta do servidor: '%ld'\n", payload.i32);
+    }
+}
+/*---------------------------------------------------------------------------*/
