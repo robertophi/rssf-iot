@@ -1,16 +1,23 @@
 #include "contiki.h"
 #include "sys/etimer.h"
+#include "sys/ctimer.h"
 #include "button-sensor.h"
 #include "batmon-sensor.h"
 
 #include <stdio.h>
 
 /*---------------------------------------------------------------------------*/
-#define BUF_SIZE 8
-static int buffer[BUF_SIZE];
-static int buf_c = 0;
 
-static struct etimer et_sensor;
+
+static struct ctimer ct_sensor;
+static void timer_interrupt(void *ptr){
+    int val = batmon_sensor.value(BATMON_SENSOR_TYPE_TEMP); // lê sensor
+	printf(" Temperatura : %d \n", val);
+
+    struct ctimer* ct_ptr = ptr;
+    ctimer_reset(ct_ptr);
+}
+
 
 /*---------------------------------------------------------------------------*/
 PROCESS(sensor_process, "Sensor process");
@@ -23,23 +30,12 @@ PROCESS_THREAD(sensor_process, ev, data)
 
   SENSORS_ACTIVATE(batmon_sensor);
 
-  etimer_set(&et_sensor, 1*CLOCK_SECOND); // a cada segundo
+  
+  void *ct_ptr = &ct_sensor;
+  ctimer_set(&ct_sensor, 1*CLOCK_SECOND, timer_interrupt, ct_ptr ); // a cada segundo
 
   while(1) {
     PROCESS_WAIT_EVENT();
-    if(ev == PROCESS_EVENT_TIMER)  // se passou um segundo
-    {
-        etimer_reset(&et_sensor); // reinicia timer
-
-        int val = batmon_sensor.value(BATMON_SENSOR_TYPE_TEMP); // lê sensor
-
-        /* Insira seu código aqui */
-        buffer[buf_c++] = val;
-        buf_c = buf_c % BUF_SIZE;
-
-
-        printf("Leu %d\n", val);
-    }
   }
 
   PROCESS_END();
