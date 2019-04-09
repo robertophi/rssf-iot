@@ -1,7 +1,7 @@
 TARGET = srf06-cc26xx
 BOARD = launchpad/cc1350
 
-CONTIKI_PROJECT = sensor-timer-uart
+CONTIKI_PROJECT = sensor-button
 
 all: $(CONTIKI_PROJECT)
 
