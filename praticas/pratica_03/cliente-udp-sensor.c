@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include "utils.h"
 #include "sensor-timer.h"
+#include <inttypes.h>
+#include <leds.h>
 
 #define SEND_INTERVAL		(5 * CLOCK_SECOND)
 
@@ -51,7 +53,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
   /********** CONECTANDO AO SERVIDOR UDP **********/
   // Encontrar endereço IPv6 do servidor
-  static resolv_status_t status = RESOLV_STATUS_UNCACHED;
+  /*static resolv_status_t status = RESOLV_STATUS_UNCACHED;
   while(status != RESOLV_STATUS_CACHED)
   {
       status = set_connection_address(&ipaddr, UDP_CONNECTION_ADDR);
@@ -67,7 +69,8 @@ PROCESS_THREAD(udp_client_process, ev, data)
       }
   }
   // Se não utilizar mDNS, use a linha abaixo para registrar IPv6 destino
-  // uip_ip6addr(&ipaddr, 0xfe80, 0, 0, 0, 0x215, 0x2000, 0x0002, 0x2145);
+   */
+  uip_ip6addr(&ipaddr, 0xfd00, 0, 0, 0, 0x212, 0x4b00, 0x1376, 0x4e03);
 
   // Criando socket UDP para conexão com host:porta remoto
   client_conn = udp_new(&ipaddr, UIP_HTONS(CONN_PORT), NULL);
@@ -102,6 +105,8 @@ PROCESS_THREAD(udp_client_process, ev, data)
 }
 
 
+
+
 /*------------------FUNÇÕES AUXILIARES---------------------------------------*/
 static void send_packet(void)
 {
@@ -126,5 +131,13 @@ static void udp_handler(void)
       memcpy(payload.i8, uip_appdata, sizeof(payload));
       printf("Resposta do servidor: '%ld'\n", payload.i32);
     }
+	switch(payload.i32){
+		case 0:
+			leds_off(LEDS_ALL);
+		case 1:
+			leds_on(LEDS_GREEN);
+		case 2:
+			leds_on(LEDS_RED);
+	}
 }
 /*---------------------------------------------------------------------------*/
