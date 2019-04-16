@@ -1,20 +1,12 @@
-#include "contiki.h"
-#include "contiki-net.h"
-#include "net/ip/resolv.h"
-
+#include <contiki.h>
+#include <contiki-net.h>
+#include <net/ip/resolv.h>
 #include <stdio.h>
-
 #include "utils.h"
-
-
-
-
 
 static struct etimer et;
 static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t ipaddr;
-
-
 
 
 /*---------------------------------------------------------------------------*/
@@ -47,7 +39,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
   // Configura nome local (mDNS).
   char contiki_hostname[16];
-  sprintf(contiki_hostname,"sensor %02X%02X",linkaddr_node_addr.u8[6], linkaddr_node_addr.u8[7]);
+  sprintf(contiki_hostname,"sensor%02X%02X",linkaddr_node_addr.u8[6], linkaddr_node_addr.u8[7]);
   resolv_set_hostname(contiki_hostname);
   printf("Configurando hostname para %s\r\n",contiki_hostname);
 
@@ -58,6 +50,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
   while(status != RESOLV_STATUS_CACHED)
   {
       status = set_connection_address(&ipaddr, UDP_CONNECTION_ADDR);
+<<<<<<< HEAD
 
       if(status == RESOLV_STATUS_RESOLVING)
       {
@@ -71,6 +64,12 @@ PROCESS_THREAD(udp_client_process, ev, data)
   }*/
   // Se não utilizar mDNS, use a linha abaixo para registrar IPv6 destino
   uip_ip6addr(&ipaddr, 0xfd00, 0, 0, 0, 0x212, 0x4b00, 0x1376, 0x4e03);
+=======
+      PROCESS_WAIT_EVENT();
+  }
+  // Se não utilizar mDNS, use a linha abaixo para registrar IPv6 destino
+  // uip_ip6addr(&ipaddr, 0xfd00, 0, 0, 0, 0x212, 0x4b00, 0x1376, 0x4e03);
+>>>>>>> 2c8e60f9f55a1f6e6bef04203c7cd9e3187d4ced
 
   // Criando socket UDP para conexão com host:porta remoto
   client_conn = udp_new(&ipaddr, UIP_HTONS(CONN_PORT), NULL);
