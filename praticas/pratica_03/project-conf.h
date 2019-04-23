@@ -1,5 +1,8 @@
 /* Definições gerais para a prática 03 */
 
+// Qual banda vamos usar?
+#define DOT_15_4G_CONF_FREQUENCY_BAND_ID DOT_15_4G_FREQUENCY_BAND_915
+
 // Qual canal vamos usar?
 #define RF_CORE_CONF_CHANNEL (0)
 
